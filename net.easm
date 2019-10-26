@@ -1,0 +1,152 @@
+;; load net into memory
+CALLDATASIZE
+PUSH 0
+PUSH 0
+CALLDATACOPY
+
+;; push address onto stack
+PUSH 2112
+PUSH 16
+MUL
+
+rewrite:
+	;; load node A
+	DUP1
+	MLOAD
+
+	;; push A[0:3] onto stack
+	PUSH 128
+	SHR
+	DUP1
+	PUSH 0xffffffff
+	AND
+	SWAP1
+	PUSH 32
+	SHR
+	DUP1
+	PUSH 0xffffffff
+	AND
+	SWAP1
+	PUSH 32
+	SHR
+	DUP1
+	PUSH 0xffffffff
+	AND
+	SWAP1
+	PUSH 32
+	SHR
+
+	;; push A type
+	DUP4
+	PUSH 3
+	AND
+
+	;; A type == PTR -> @ptr
+	DUP1
+	ISZERO
+	JUMPI @ptr
+
+	;; A type == NUM -> @num
+	PUSH 1
+	EQ
+	JUMPI @num
+
+	;; otherwise -> @era
+era:
+	;; TODO: implement
+	STOP
+
+num:
+	;; load A kind
+	DUP4
+	PUSH 6
+	SHR
+	PUSH 3
+	AND
+
+	;; A kind == CON -> @num_con
+	DUP1
+	ISZERO
+	JUMPI @num_con
+
+	;; A kind == OP1 -> @num_op1
+	DUP1
+	PUSH 1
+	EQ
+	JUMPI @num_opI
+
+	;; A kind == OP2 -> @num_opII
+	PUSH 2
+	EQ
+	JUMPI @num_opII
+
+	;; otherwise -> @num_ite
+	;; TODO: implement
+	STOP
+
+num_opI:
+	POP
+	;; TODO: implement
+	STOP
+
+num_opII:
+	;; swap A[0] and A[1]
+	SWAP1
+
+	SWAP3
+
+	;; push OP1 << 6 | NUM << 2
+	PUSH 0x44
+
+	;; push A[3] >> 2 & 3
+	DUP2
+	PUSH 2
+	SHR
+	PUSH 3
+	AND
+
+	;; push A[3] & ~(3 << 6 | 3 << 0 | 3 << 2)
+	SWAP2
+	PUSH 0xffffff30
+	AND
+
+	OR
+	OR
+	SWAP3
+
+	JUMP @store_A
+
+num_con:
+	POP
+	;; TODO: implement
+	STOP
+
+ptr:
+	POP
+	;; TODO: implement
+	STOP
+
+store_A:
+	;; load A[0:3] into stack[0] bits 128:255
+	PUSH 96
+	SHL
+	SWAP1
+	PUSH 64
+	SHL
+	OR
+	SWAP1
+	PUSH 32
+	SHL
+	OR
+	OR
+	PUSH 128
+	SHL
+
+	;; store stack[0] into net[A addr]
+	DUP2
+	MLOAD
+	PUSH 0xffffffffffffffffffffffffffffffff
+	AND
+	OR
+	SWAP1
+	MSTORE
