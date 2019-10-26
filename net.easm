@@ -1,3 +1,51 @@
+;; setup OP1 jump table in memory[0:0x200]
+PUSH @num_opI_add
+PUSH 0x000
+MSTORE
+PUSH @num_opI_sub
+PUSH 0x020
+MSTORE
+PUSH @num_opI_mul
+PUSH 0x040
+MSTORE
+PUSH @num_opI_div
+PUSH 0x060
+MSTORE
+PUSH @num_opI_mod
+PUSH 0x080
+MSTORE
+PUSH @num_opI_pow
+PUSH 0x0a0
+MSTORE
+PUSH @num_opI_and
+PUSH 0x0c0
+MSTORE
+PUSH @num_opI_bor
+PUSH 0x0e0
+MSTORE
+PUSH @num_opI_xor
+PUSH 0x100
+MSTORE
+PUSH @num_opI_not
+PUSH 0x120
+MSTORE
+PUSH @num_opI_shr
+PUSH 0x140
+MSTORE
+PUSH @num_opI_shl
+PUSH 0x160
+MSTORE
+PUSH @num_opI_gtr
+PUSH 0x180
+MSTORE
+PUSH @num_opI_les
+PUSH 0x1a0
+MSTORE
+PUSH @num_opI_eql
+PUSH 0x1c0
+MSTORE
+;; XXX: floating point operations?
+
 ;; load net into memory[0x200]
 CALLDATASIZE
 DUP1
@@ -92,8 +140,101 @@ num:
 
 num_opI:
 	POP
-	;; TODO: implement
-	STOP
+
+	;; load op code
+	DUP4
+	PUSH 8
+	SHR
+
+	;; jump to op label
+	PUSH 5
+	SHL
+	MLOAD
+	JUMP
+
+num_opI_add:
+	ADD
+	JUMP @num_opI_finish
+num_opI_sub:
+	SUB
+	JUMP @num_opI_finish
+num_opI_mul:
+	MUL
+	JUMP @num_opI_finish
+num_opI_div:
+	DIV
+	JUMP @num_opI_finish
+num_opI_mod:
+	MOD
+	JUMP @num_opI_finish
+num_opI_pow:
+	EXP
+	JUMP @num_opI_finish
+num_opI_and:
+	AND
+	JUMP @num_opI_finish
+num_opI_bor:
+	OR
+	JUMP @num_opI_finish
+num_opI_xor:
+	XOR
+	JUMP @num_opI_finish
+num_opI_not:
+	NOT
+	JUMP @num_opI_finish
+num_opI_shr:
+	SHR
+	JUMP @num_opI_finish
+num_opI_shl:
+	SHL
+	JUMP @num_opI_finish
+num_opI_gtr:
+	GT
+	JUMP @num_opI_finish
+num_opI_les:
+	LT
+	JUMP @num_opI_finish
+num_opI_eql:
+	EQ
+
+num_opI_finish:
+	PUSH 224
+	SHL
+
+	;; XXX: condition on A type[2] == PTR
+
+	;; load net[A[2]]
+	SWAP1
+	PUSH 2
+	SHL
+	PUSH 0x200
+	ADD
+	DUP1
+	SWAP2
+	DUP2
+	MLOAD
+
+	;; set port to result
+	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	OR
+	SWAP1
+	MSTORE
+
+	;; set port type to NUM
+	PUSH 0xf
+	OR
+	DUP1
+	MLOAD
+	PUSH 1
+	OR
+	SWAP1
+	MSTORE8
+
+	POP
+	;; XXX: free A addr
+	POP
+	JUMP @return
 
 num_opII:
 	;; swap A[0] and A[1]
