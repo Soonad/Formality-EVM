@@ -1,5 +1,6 @@
 ;; load net into memory[0x200]
 CALLDATASIZE
+DUP1
 PUSH 0
 PUSH 0x200
 CALLDATACOPY
@@ -177,4 +178,9 @@ store_A:
 	SWAP1
 	MSTORE
 
+return:
 	POP
+
+	;; return net
+	PUSH 0x200
+	RETURN
