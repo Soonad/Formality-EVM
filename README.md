@@ -4,4 +4,4 @@ EVM implementation of Formality
 
 ## Current status
 
-- `NUM` - `OP2`: DONE (mostly)
+- `NUM` - `OP2`: DONE

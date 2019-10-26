@@ -6,11 +6,14 @@ CALLDATACOPY
 
 ;; push address onto stack
 PUSH 2112
-PUSH 16
-MUL
+PUSH 2
+SHL
 
 rewrite:
 	;; load node A
+	DUP1
+	PUSH 2
+	SHL
 	DUP1
 	MLOAD
 
@@ -98,18 +101,37 @@ num_opII:
 	;; push OP1 << 6 | NUM << 2
 	PUSH 0x44
 
-	;; push A[3] >> 2 & 3
+	;; push A[3] & ~(3 << 6 | 3 << 0 | 3 << 2)
 	DUP2
+	PUSH 0xffffff30
+	AND
+
+	;; push A[3] >> 2 & 3
+	SWAP2
 	PUSH 2
 	SHR
 	PUSH 3
 	AND
 
-	;; push A[3] & ~(3 << 6 | 3 << 0 | 3 << 2)
-	SWAP2
-	PUSH 0xffffff30
-	AND
+	DUP1
+	PUSH 0
+	LT
+	JUMPI @num_opII_nonptr
 
+	;; load net[A[0]]
+	DUP6
+	PUSH 2
+	SHL
+	DUP1
+	MLOAD
+
+	;; set port to 0 then store
+	PUSH 0xfffffffcffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	SWAP1
+	MSTORE
+
+num_opII_nonptr:
 	OR
 	OR
 	SWAP3
@@ -150,3 +172,5 @@ store_A:
 	OR
 	SWAP1
 	MSTORE
+
+	POP
