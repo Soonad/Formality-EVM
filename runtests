@@ -1,0 +1,42 @@
+#!/bin/sh
+
+: ${EVM:=evm}
+
+tmp=$(mktemp -d)
+
+trap 'rm -rf "$tmp"' EXIT
+
+if [ $# = 0 ]; then
+	set -- test/*
+fi
+
+failed=0
+
+for test; do
+	result=FAIL
+	echo "Running test $test..."
+	echo
+	. "$test"
+	printf ' %s %s %s %s\n' $output >"$tmp/want"
+	input="$(printf %064x $redex)$(printf %s $input)"
+	if $EVM --statdump --input "$input" --codefile net.evm run >"$tmp/out"; then
+		sed '
+			s,^0x,,
+			s,\n,,
+			s,[[:xdigit:]]\{32\},&\n,g
+			s,[[:xdigit:]]\{8\}, &,g
+		' "$tmp/out" | sed '$d' >"$tmp/got"
+		if (cd "$tmp" && diff -u got want); then
+			result=PASS
+		fi
+		echo
+	fi
+	echo "$result"
+	if [ "$result" = FAIL ]; then
+		failed=$((failed + 1))
+	fi
+	echo "--------------------------------------------------------------------------------"
+done
+
+echo "$failed test failures"
+[ "$failed" -eq 0 ]
