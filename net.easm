@@ -47,14 +47,18 @@ MSTORE
 ;; XXX: floating point operations?
 
 ;; load net into memory[0x200]
-CALLDATASIZE
+PUSH 0x20
 DUP1
-PUSH 0
+CALLDATASIZE
+SUB
+DUP1
+SWAP2
 PUSH 0x200
 CALLDATACOPY
 
-;; push address onto stack
-PUSH 2112
+;; load redex address
+PUSH 0
+CALLDATALOAD
 PUSH 2
 SHL
 
