@@ -29,12 +29,12 @@ for test; do
 		if (cd "$tmp" && diff -u got want); then
 			result=PASS
 		fi
+	fi
+	if [ "$result" = FAIL ]; then
+		failed=$((failed + 1))
 		echo
 	fi
 	echo "$result"
-	if [ "$result" = FAIL ]; then
-		failed=$((failed + 1))
-	fi
 	echo "--------------------------------------------------------------------------------"
 done
 
