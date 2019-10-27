@@ -62,6 +62,7 @@ CALLDATALOAD
 PUSH 2
 SHL
 
+;; stack = [net size, redex]
 rewrite:
 	;; load node A
 	DUP1
