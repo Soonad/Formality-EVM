@@ -35,6 +35,16 @@ define(OP_GTR, 12)
 define(OP_LES, 13)
 define(OP_EQL, 14)
 
+;; input  = [pointer, ...]
+;; output = [port value, port address, ...]
+define(NET_LOAD,
+	`PUSH 2
+	SHL
+	PUSH NET
+	ADD
+	DUP1
+	MLOAD')dnl
+
 ;; input  = [info, ...]
 ;; output = [kind, ...]
 define(INFO_KIND,
@@ -95,12 +105,7 @@ SHL
 rewrite:
 	;; load node A
 	DUP1
-	PUSH 2
-	SHL
-	PUSH NET
-	ADD
-	DUP1
-	MLOAD
+	NET_LOAD
 
 	;; push A[0:3] onto stack
 	PUSH 128
@@ -236,21 +241,17 @@ num_opI_finish:
 
 	;; load net[A[2]]
 	SWAP1
-	PUSH 2
-	SHL
-	PUSH NET
-	ADD
-	DUP1
-	SWAP2
-	DUP2
-	MLOAD
+	NET_LOAD
 
 	;; set port to result
 	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 	AND
+	DUP3
 	OR
-	SWAP1
+	DUP2
 	MSTORE
+	SWAP1
+	POP
 
 	;; set port type to NUM
 	PUSH 0xf
@@ -290,12 +291,7 @@ num_opII:
 
 	;; load net[A[0]]
 	DUP6
-	PUSH 2
-	SHL
-	PUSH NET
-	ADD
-	DUP1
-	MLOAD
+	NET_LOAD
 
 	;; set port to 0 then store
 	PUSH 0xfffffffcffffffffffffffffffffffffffffffffffffffffffffffffffffffff
