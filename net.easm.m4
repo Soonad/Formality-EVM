@@ -1,63 +1,92 @@
-;; setup OP1 jump table in memory[0:0x200]
-PUSH @num_opI_add
-PUSH 0x000
-MSTORE
-PUSH @num_opI_sub
-PUSH 0x020
-MSTORE
-PUSH @num_opI_mul
-PUSH 0x040
-MSTORE
-PUSH @num_opI_div
-PUSH 0x060
-MSTORE
-PUSH @num_opI_mod
-PUSH 0x080
-MSTORE
-PUSH @num_opI_pow
-PUSH 0x0a0
-MSTORE
-PUSH @num_opI_and
-PUSH 0x0c0
-MSTORE
-PUSH @num_opI_bor
-PUSH 0x0e0
-MSTORE
-PUSH @num_opI_xor
-PUSH 0x100
-MSTORE
-PUSH @num_opI_not
-PUSH 0x120
-MSTORE
-PUSH @num_opI_shr
-PUSH 0x140
-MSTORE
-PUSH @num_opI_shl
-PUSH 0x160
-MSTORE
-PUSH @num_opI_gtr
-PUSH 0x180
-MSTORE
-PUSH @num_opI_les
-PUSH 0x1a0
-MSTORE
-PUSH @num_opI_eql
-PUSH 0x1c0
-MSTORE
+divert(-1)
+
+;; offset of redex in input
+define(INPUT_REDEX, 0x0)
+;; offset of net in input
+define(INPUT_NET, 0x20)
+
+;; address of op jump table in memory
+define(OP_TABLE, 0x0)
+;; address of net in memory
+define(NET, 0x200)
+
+define(PORT_PTR, 0)
+define(PORT_NUM, 1)
+define(PORT_ERA, 2)
+
+define(NODE_CON, 0)
+define(NODE_OP1, 1)
+define(NODE_OP2, 2)
+define(NODE_ITE, 3)
+
+define(OP_ADD, 0)
+define(OP_SUB, 1)
+define(OP_MUL, 2)
+define(OP_DIV, 3)
+define(OP_MOD, 4)
+define(OP_POW, 5)
+define(OP_AND, 6)
+define(OP_BOR, 7)
+define(OP_XOR, 8)
+define(OP_NOT, 9)
+define(OP_SHR, 10)
+define(OP_SHL, 11)
+define(OP_GTR, 12)
+define(OP_LES, 13)
+define(OP_EQL, 14)
+
+;; input  = [info, ...]
+;; output = [kind, ...]
+define(INFO_KIND,
+	`PUSH 6
+	SHR
+	PUSH 3
+	AND')dnl
+
+;; input  = [info, ...]
+;; output = [type of port N, ...]
+define(INFO_TYPE,
+	`PUSH eval($1 * 2)
+	SHR
+	PUSH 3
+	AND')dnl
+
+define(STORE_LABEL,
+`PUSH $3
+PUSH eval($1 + $2 * 32)
+MSTORE')dnl
+
+divert(0)dnl
+;; setup OP1 jump table in memory[OP_TABLE]
+STORE_LABEL(OP_TABLE, OP_ADD, @num_opI_add)
+STORE_LABEL(OP_TABLE, OP_SUB, @num_opI_sub)
+STORE_LABEL(OP_TABLE, OP_MUL, @num_opI_mul)
+STORE_LABEL(OP_TABLE, OP_DIV, @num_opI_div)
+STORE_LABEL(OP_TABLE, OP_MOD, @num_opI_mod)
+STORE_LABEL(OP_TABLE, OP_POW, @num_opI_pow)
+STORE_LABEL(OP_TABLE, OP_AND, @num_opI_and)
+STORE_LABEL(OP_TABLE, OP_BOR, @num_opI_bor)
+STORE_LABEL(OP_TABLE, OP_XOR, @num_opI_xor)
+STORE_LABEL(OP_TABLE, OP_NOT, @num_opI_not)
+STORE_LABEL(OP_TABLE, OP_SHR, @num_opI_shr)
+STORE_LABEL(OP_TABLE, OP_SHL, @num_opI_shl)
+STORE_LABEL(OP_TABLE, OP_GTR, @num_opI_gtr)
+STORE_LABEL(OP_TABLE, OP_LES, @num_opI_les)
+STORE_LABEL(OP_TABLE, OP_EQL, @num_opI_eql)
 ;; XXX: floating point operations?
 
-;; load net into memory[0x200]
-PUSH 0x20
+;; load net into memory[NET]
+PUSH INPUT_NET
 DUP1
 CALLDATASIZE
 SUB
 DUP1
 SWAP2
-PUSH 0x200
+PUSH NET
 CALLDATACOPY
 
 ;; load redex address
-PUSH 0
+PUSH INPUT_REDEX
 CALLDATALOAD
 PUSH 2
 SHL
@@ -68,7 +97,7 @@ rewrite:
 	DUP1
 	PUSH 2
 	SHL
-	PUSH 0x200
+	PUSH NET
 	ADD
 	DUP1
 	MLOAD
@@ -118,10 +147,7 @@ era:
 num:
 	;; load A kind
 	DUP4
-	PUSH 6
-	SHR
-	PUSH 3
-	AND
+	INFO_KIND
 
 	;; A kind == CON -> @num_con
 	DUP1
@@ -130,12 +156,12 @@ num:
 
 	;; A kind == OP1 -> @num_op1
 	DUP1
-	PUSH 1
+	PUSH NODE_OP1
 	EQ
 	JUMPI @num_opI
 
 	;; A kind == OP2 -> @num_opII
-	PUSH 2
+	PUSH NODE_OP2
 	EQ
 	JUMPI @num_opII
 
@@ -212,7 +238,7 @@ num_opI_finish:
 	SWAP1
 	PUSH 2
 	SHL
-	PUSH 0x200
+	PUSH NET
 	ADD
 	DUP1
 	SWAP2
@@ -246,21 +272,16 @@ num_opII:
 	SWAP1
 
 	SWAP3
-
-	;; push OP1 << 6 | NUM << 2
-	PUSH 0x44
+	PUSH eval(NODE_OP1 << 6 | PORT_NUM << 2)
 
 	;; push A[3] & ~(3 << 6 | 3 << 0 | 3 << 2)
 	DUP2
 	PUSH 0xffffff30
 	AND
 
-	;; push A[3] >> 2 & 3
+	;; push A type[1]
 	SWAP2
-	PUSH 2
-	SHR
-	PUSH 3
-	AND
+	INFO_TYPE(1)
 
 	DUP1
 	PUSH 0
@@ -271,7 +292,7 @@ num_opII:
 	DUP6
 	PUSH 2
 	SHL
-	PUSH 0x200
+	PUSH NET
 	ADD
 	DUP1
 	MLOAD
@@ -328,5 +349,5 @@ return:
 	POP
 
 	;; return net
-	PUSH 0x200
+	PUSH NET
 	RETURN
