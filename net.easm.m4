@@ -129,17 +129,17 @@ rewrite:
 	PUSH 32
 	SHR
 
-	;; push A type
+	;; push A port[0] type
 	DUP4
 	PUSH 3
 	AND
 
-	;; A type == PTR -> @ptr
+	;; A port[0] type == PTR -> @ptr
 	DUP1
 	ISZERO
 	JUMPI @ptr
 
-	;; A type == NUM -> @num
+	;; A port[0] == NUM -> @num
 	PUSH 1
 	EQ
 	JUMPI @num
