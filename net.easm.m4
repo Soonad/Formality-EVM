@@ -367,8 +367,88 @@ num_opII_nonptr:
 
 num_con:
 	POP
-	;; TODO: implement
-	STOP
+
+	DUP4
+	INFO_TYPE(1)
+	JUMPI @num_con_II
+
+	;; net[a[1]] = a[0]
+	DUP2
+	NET_LOAD
+	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	DUP3
+	PUSH 224
+	SHL
+	OR
+	DUP2
+	MSTORE
+
+	;; set net[a[1] | 3] port type[a[1] & 3] to NUM
+	PUSH 0xc
+	OR
+	DUP1
+	MLOAD
+	DUP4
+	PUSH 3
+	AND
+	PUSH 1
+	SHL
+	PUSH 224
+	ADD
+	PUSH PORT_NUM
+	SWAP1
+	SHL
+	OR
+	SWAP1
+	MSTORE
+
+num_con_II:
+	SWAP1
+	POP
+
+	DUP3
+	INFO_TYPE(2)
+	JUMPI @num_con_done
+
+	;; net[a[2]] = a[0]
+	DUP2
+	NET_LOAD
+	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	DUP3
+	PUSH 224
+	SHL
+	OR
+	DUP2
+	MSTORE
+
+	;; set net[a[2] | 3] port type[a[2] & 3] to NUM
+	PUSH 0xc
+	OR
+	DUP1
+	MLOAD
+	DUP4
+	PUSH 3
+	AND
+	PUSH 1
+	SHL
+	PUSH 224
+	ADD
+	PUSH PORT_NUM
+	SWAP1
+	SHL
+	OR
+	SWAP1
+	MSTORE
+
+num_con_done:
+	POP
+	POP
+	POP
+	POP
+	;; XXX: free redex
+	JUMP @return
 
 ptr:
 	POP
