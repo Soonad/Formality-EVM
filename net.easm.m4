@@ -171,8 +171,67 @@ num:
 	JUMPI @num_opII
 
 	;; otherwise -> @num_ite
-	;; TODO: implement
-	STOP
+num_ite:
+	DUP4
+	PUSH 0xffffff00
+	AND
+	DUP5
+	INFO_TYPE(1)
+	OR
+
+	;; net[a[0]] &= ~3
+	DUP3
+	NET_LOAD
+	PUSH 0xfffffffcffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	SWAP1
+	MSTORE
+
+	SWAP1
+	ISZERO
+	JUMPI @num_ite_false
+
+	DUP4
+	PUSH 2
+	SHR
+	PUSH eval(3 << 2)
+	AND
+	PUSH eval(PORT_ERA << 4)
+	OR
+
+	OR
+
+	SWAP3
+	POP
+	PUSH 0xffffffff
+	SWAP2
+	SWAP1
+
+	;; nodes[a[1]] ^= 3
+	DUP2
+	NET_LOAD
+	PUSH 0x0000000300000000000000000000000000000000000000000000000000000000
+	XOR
+	SWAP1
+	MSTORE
+
+	JUMP @store_A
+
+num_ite_false:
+	DUP4
+	PUSH eval(3 << 4)
+	AND
+	PUSH eval(PORT_ERA << 2)
+	OR
+
+	OR
+
+	SWAP3
+	POP
+	PUSH 0xffffffff
+	SWAP1
+
+	JUMP @store_A
 
 num_opI:
 	POP
