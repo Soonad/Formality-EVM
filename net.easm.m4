@@ -7,8 +7,10 @@ define(INPUT_NET, 0x20)
 
 ;; address of op jump table in memory
 define(OP_TABLE, 0x0)
+;; address of scratch memory
+define(SCRATCH, 0x200)
 ;; address of net in memory
-define(NET, 0x200)
+define(NET, 0x300)
 
 define(PORT_PTR, 0)
 define(PORT_NUM, 1)
@@ -101,7 +103,10 @@ CALLDATALOAD
 PUSH 2
 SHL
 
-;; stack = [redex, net size]
+GAS
+SWAP1
+
+;; stack = [redex, gas, net size]
 rewrite:
 	;; load node A
 	DUP1
@@ -483,6 +488,18 @@ store_A:
 return:
 	POP
 
+	;; calculate gas used
+	GAS
+	SWAP1
+	SUB
+	PUSH eval(NET - 32)
+	SWAP1
+	DUP2
+	MSTORE
+
 	;; return net
-	PUSH NET
+	SWAP1
+	PUSH 32
+	ADD
+	SWAP1
 	RETURN

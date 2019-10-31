@@ -13,28 +13,26 @@ fi
 failed=0
 
 for test; do
-	result=FAIL
+	pass=0
 	echo "Running test $test..."
 	echo
 	. "$test"
 	printf ' %s %s %s %s\n' $output >"$tmp/want"
 	input="$(printf %064x $redex)$(printf %s $input)"
 	if $EVM --statdump --input "$input" --codefile net.evm run >"$tmp/out"; then
-		sed '
-			s,^0x,,
-			s,\n,,
+		tail -c +67 "$tmp/out" | sed '
 			s,[[:xdigit:]]\{32\},&\n,g
 			s,[[:xdigit:]]\{8\}, &,g
-		' "$tmp/out" | sed '$d' >"$tmp/got"
+		' | sed '$d' >"$tmp/got"
 		if (cd "$tmp" && diff -u got want); then
-			result=PASS
+			printf 'PASS (used %d gas)\n' "$(head -c 66 "$tmp/out")"
+			pass=1
 		fi
 	fi
-	if [ "$result" = FAIL ]; then
+	if [ "$pass" -eq 0 ]; then
 		failed=$((failed + 1))
-		echo
+		printf "\nFAIL\n"
 	fi
-	echo "$result"
 	echo "--------------------------------------------------------------------------------"
 done
 
