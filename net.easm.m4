@@ -7,10 +7,12 @@ define(INPUT_NET, 0x20)
 
 ;; address of op jump table in memory
 define(OP_TABLE, 0x0)
+;; address of type jump table in memory
+define(TYPE_TABLE, 0x200)
 ;; address of scratch memory
-define(SCRATCH, 0x200)
+define(SCRATCH, 0x300)
 ;; address of net in memory
-define(NET, 0x300)
+define(NET, 0x400)
 
 define(PORT_PTR, 0)
 define(PORT_NUM, 1)
@@ -87,6 +89,11 @@ STORE_LABEL(OP_TABLE, OP_LES, @num_opI_les)
 STORE_LABEL(OP_TABLE, OP_EQL, @num_opI_eql)
 ;; XXX: floating point operations?
 
+;; setup port 0 type jump table in memory[TYPE_TABLE]
+STORE_LABEL(TYPE_TABLE, PORT_PTR, @ptr)
+STORE_LABEL(TYPE_TABLE, PORT_NUM, @num)
+STORE_LABEL(TYPE_TABLE, PORT_ERA, @era)
+
 ;; load net into memory[NET]
 PUSH INPUT_NET
 DUP1
@@ -139,18 +146,14 @@ rewrite:
 	PUSH 3
 	AND
 
-	;; A port[0] type == PTR -> @ptr
-	DUP1
-	ISZERO
-	JUMPI @ptr
+	PUSH 5
+	SHL
+	PUSH TYPE_TABLE
+	ADD
+	MLOAD
+	JUMP
 
-	;; A port[0] == NUM -> @num
-	PUSH 1
-	EQ
-	JUMPI @num
-
-	;; otherwise -> @era
-era:
+ptr:
 	;; TODO: implement
 	STOP
 
@@ -455,8 +458,7 @@ num_con_done:
 	;; XXX: free redex
 	JUMP @return
 
-ptr:
-	POP
+era:
 	;; TODO: implement
 	STOP
 
