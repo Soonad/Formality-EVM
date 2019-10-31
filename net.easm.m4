@@ -47,7 +47,7 @@ define(NET_LOAD,
 	PUSH NET
 	ADD
 	DUP1
-	MLOAD')dnl
+	MLOAD')
 
 ;; input  = [info, ...]
 ;; output = [kind, ...]
@@ -55,7 +55,7 @@ define(INFO_KIND,
 	`PUSH 6
 	SHR
 	PUSH 3
-	AND')dnl
+	AND')
 
 ;; input  = [info, ...]
 ;; output = [type of port N, ...]
@@ -63,12 +63,12 @@ define(INFO_TYPE,
 	`PUSH eval($1 * 2)
 	SHR
 	PUSH 3
-	AND')dnl
+	AND')
 
 define(STORE_LABEL,
 `PUSH $3
 PUSH eval($1 + $2 * 32)
-MSTORE')dnl
+MSTORE')
 
 divert(0)dnl
 ;; setup OP1 jump table in memory[OP_TABLE]
