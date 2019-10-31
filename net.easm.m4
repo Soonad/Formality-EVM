@@ -49,6 +49,41 @@ define(NET_LOAD,
 	DUP1
 	MLOAD')
 
+;; usage  NET_SET(type)
+;; input  = [port value, pointer, ...]
+;; output = unchanged
+define(NET_SET,
+	`;; net[ptr] = a[0]
+	DUP2
+	NET_LOAD
+	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	AND
+	DUP3
+	PUSH 224
+	SHL
+	OR
+	DUP2
+	MSTORE
+
+	;; set net[ptr | 3] port type[ptr & 3] to $type
+	PUSH 0xc
+	OR
+	DUP1
+	MLOAD
+	DUP4
+	PUSH 3
+	AND
+	PUSH 1
+	SHL
+	PUSH 224
+	ADD
+	PUSH $1
+	SWAP1
+	SHL
+	OR
+	SWAP1
+	MSTORE')
+
 ;; input  = [info, ...]
 ;; output = [kind, ...]
 define(INFO_KIND,
@@ -380,36 +415,7 @@ num_con:
 	INFO_TYPE(1)
 	JUMPI @num_con_II
 
-	;; net[a[1]] = a[0]
-	DUP2
-	NET_LOAD
-	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-	AND
-	DUP3
-	PUSH 224
-	SHL
-	OR
-	DUP2
-	MSTORE
-
-	;; set net[a[1] | 3] port type[a[1] & 3] to NUM
-	PUSH 0xc
-	OR
-	DUP1
-	MLOAD
-	DUP4
-	PUSH 3
-	AND
-	PUSH 1
-	SHL
-	PUSH 224
-	ADD
-	PUSH PORT_NUM
-	SWAP1
-	SHL
-	OR
-	SWAP1
-	MSTORE
+	NET_SET(PORT_NUM)
 
 num_con_II:
 	SWAP1
@@ -419,36 +425,7 @@ num_con_II:
 	INFO_TYPE(2)
 	JUMPI @num_con_done
 
-	;; net[a[2]] = a[0]
-	DUP2
-	NET_LOAD
-	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-	AND
-	DUP3
-	PUSH 224
-	SHL
-	OR
-	DUP2
-	MSTORE
-
-	;; set net[a[2] | 3] port type[a[2] & 3] to NUM
-	PUSH 0xc
-	OR
-	DUP1
-	MLOAD
-	DUP4
-	PUSH 3
-	AND
-	PUSH 1
-	SHL
-	PUSH 224
-	ADD
-	PUSH PORT_NUM
-	SWAP1
-	SHL
-	OR
-	SWAP1
-	MSTORE
+	NET_SET(PORT_NUM)
 
 num_con_done:
 	POP
@@ -466,32 +443,9 @@ era:
 	INFO_TYPE(1)
 	JUMPI @era_II
 
-	;; set net[a[1]] = 0xffffffff (necessary only for tests)
-	DUP1
-	NET_LOAD
-	PUSH 0xffffffff00000000000000000000000000000000000000000000000000000000
-	OR
-	DUP2
-	MSTORE
-
-	;; set net[a[1] | 3] port type[a[1] & 3] to ERA
-	PUSH 0xc
-	OR
-	DUP1
-	MLOAD
-	DUP3
-	PUSH 3
-	AND
-	PUSH 1
-	SHL
-	PUSH 224
-	ADD
-	PUSH PORT_ERA
-	SWAP1
-	SHL
-	OR
-	SWAP1
-	MSTORE
+	PUSH 0xffffffff
+	NET_SET(PORT_ERA)
+	POP
 
 era_II:
 	POP
@@ -501,32 +455,9 @@ era_II:
 	INFO_TYPE(2)
 	JUMPI @era_done
 
-	;; set net[a[2]] = 0xffffffff (necessary only for tests)
-	DUP1
-	NET_LOAD
-	PUSH 0xffffffff00000000000000000000000000000000000000000000000000000000
-	OR
-	DUP2
-	MSTORE
-
-	;; set net[a[2] | 3] port type[a[2] & 3] to ERA
-	PUSH 0xc
-	OR
-	DUP1
-	MLOAD
-	DUP3
-	PUSH 3
-	AND
-	PUSH 1
-	SHL
-	PUSH 224
-	ADD
-	PUSH PORT_ERA
-	SWAP1
-	SHL
-	OR
-	SWAP1
-	MSTORE
+	PUSH 0xffffffff
+	NET_SET(PORT_ERA)
+	POP
 
 era_done:
 	POP
