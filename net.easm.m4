@@ -459,8 +459,81 @@ num_con_done:
 	JUMP @return
 
 era:
-	;; TODO: implement
-	STOP
+	POP
+
+	;; check if port 1 type is PORT_PTR
+	DUP3
+	INFO_TYPE(1)
+	JUMPI @era_II
+
+	;; set net[a[1]] = 0xffffffff (necessary only for tests)
+	DUP1
+	NET_LOAD
+	PUSH 0xffffffff00000000000000000000000000000000000000000000000000000000
+	OR
+	DUP2
+	MSTORE
+
+	;; set net[a[1] | 3] port type[a[1] & 3] to ERA
+	PUSH 0xc
+	OR
+	DUP1
+	MLOAD
+	DUP3
+	PUSH 3
+	AND
+	PUSH 1
+	SHL
+	PUSH 224
+	ADD
+	PUSH PORT_ERA
+	SWAP1
+	SHL
+	OR
+	SWAP1
+	MSTORE
+
+era_II:
+	POP
+
+	;; check if port 2 type is PORT_PTR
+	DUP2
+	INFO_TYPE(2)
+	JUMPI @era_done
+
+	;; set net[a[2]] = 0xffffffff (necessary only for tests)
+	DUP1
+	NET_LOAD
+	PUSH 0xffffffff00000000000000000000000000000000000000000000000000000000
+	OR
+	DUP2
+	MSTORE
+
+	;; set net[a[2] | 3] port type[a[2] & 3] to ERA
+	PUSH 0xc
+	OR
+	DUP1
+	MLOAD
+	DUP3
+	PUSH 3
+	AND
+	PUSH 1
+	SHL
+	PUSH 224
+	ADD
+	PUSH PORT_ERA
+	SWAP1
+	SHL
+	OR
+	SWAP1
+	MSTORE
+
+era_done:
+	POP
+	POP
+	POP
+	;; XXX: free redex
+	JUMP @return
 
 store_A:
 	;; load A[0:3] into stack[0] bits 128:255

@@ -12,5 +12,6 @@ EVM implementation of Formality
 - `NUM` - `OP1`: DONE (mostly)
 - `NUM` - `OP2`: DONE
 - `NUM` - `ITE`: DONE
+- `ERA` - ` * `: DONE
 
 [b0b27752]: https://github.com/ethereum/go-ethereum/commit/b0b277525cb4e476deb461de1b5827a33daa2086
