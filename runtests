@@ -14,14 +14,14 @@ input() {
 	{
 		printf '%064x' "$redex"
 		while read main aux0 aux1 info; do
-			printf '%s' "$main" "$aux0" "$aux1" "$info"
+			printf '%016x' "$main" "$aux0" "$aux1" "$info"
 		done
 	} >"$tmp/input"
 }
 
 output() {
 	while read main aux0 aux1 info; do
-		printf ' %s %s %s %s\n' "$main" "$aux0" "$aux1" "$info"
+		printf ' %016x %016x %016x %016x\n' "$main" "$aux0" "$aux1" "$info"
 	done > "$tmp/want"
 }
 
@@ -35,8 +35,8 @@ for test; do
 	. "$test"
 	if $EVM --statdump --inputfile "$tmp/input" --codefile net.evm run >"$tmp/out"; then
 		tail -c +67 "$tmp/out" | sed '
-			s,[[:xdigit:]]\{32\},&\n,g
-			s,[[:xdigit:]]\{8\}, &,g
+			s,[[:xdigit:]]\{64\},&\n,g
+			s,[[:xdigit:]]\{16\}, &,g
 		' | sed '$d' >"$tmp/got"
 		if (cd "$tmp" && diff -u got want); then
 			printf 'PASS (used %d gas)\n' "$(head -c 66 "$tmp/out")"

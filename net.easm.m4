@@ -42,62 +42,75 @@ define(OP_EQL, 14)
 ;; input  = [pointer, ...]
 ;; output = [port value, port address, ...]
 define(NET_LOAD,
-	`PUSH 2
+	`PUSH 3
 	SHL
 	PUSH NET
 	ADD
 	DUP1
 	MLOAD')
 
-;; usage  NET_SET(type)
-;; input  = [port value, pointer, ...]
-;; output = unchanged
+;; usage  NET_SET(type, stack index of value in highest 64 bits)
+;; input  = [pointer, ...]
+;; output = [...]
 define(NET_SET,
-	`;; net[ptr] = a[0]
-	DUP2
+	`DUP1
 	NET_LOAD
-	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+	;; clear old value
+	PUSH 0x0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff
 	AND
-	DUP3
-	PUSH 224
-	SHL
-	OR
+
+	ifelse($2, `', `',
+	`;; set new value
+	DUP`'eval($2 + 2)
+	OR')
+
+	;; store
 	DUP2
 	MSTORE
 
-	;; set net[ptr | 3] port type[ptr & 3] to $type
-	PUSH 0xc
+	;; compute address of port type
+	PUSH eval(3 << 3)
 	OR
-	DUP1
-	MLOAD
-	DUP4
+	SWAP1
 	PUSH 3
 	AND
-	PUSH 1
-	SHL
-	PUSH 224
+	PUSH 7
+	SUB
 	ADD
+
+	;; set port type
 	PUSH $1
 	SWAP1
-	SHL
-	OR
-	SWAP1
-	MSTORE')
+	MSTORE8')
 
-;; input  = [info, ...]
+;; input  = [node, ...]
 ;; output = [kind, ...]
-define(INFO_KIND,
-	`PUSH 6
-	SHR
-	PUSH 3
-	AND')
+define(NODE_KIND,
+	`PUSH 28
+	BYTE')
 
-;; input  = [info, ...]
+;; input  = [node, ...]
 ;; output = [type of port N, ...]
-define(INFO_TYPE,
-	`PUSH eval($1 * 2)
+define(NODE_PORT_TYPE,
+	`PUSH eval(31 - $1)
+	BYTE')
+
+;; input  = [node, ...]
+;; output = [port N, ...]
+define(NODE_PORT,
+	`PUSH eval(192 - $1 * 64)
 	SHR
-	PUSH 3
+	ifelse($1, 0, `',
+	`PUSH 0xffffffffffffffff
+	AND')')
+
+;; input  = [node, ...]
+;; output = [label, ...]
+define(NODE_LABEL,
+	`PUSH 32
+	SHR
+	PUSH 0xffffffff
 	AND')
 
 define(STORE_LABEL,
@@ -154,32 +167,9 @@ rewrite:
 	DUP1
 	NET_LOAD
 
-	;; push A[0:3] onto stack
-	PUSH 128
-	SHR
-	DUP1
-	PUSH 0xffffffff
-	AND
-	SWAP1
-	PUSH 32
-	SHR
-	DUP1
-	PUSH 0xffffffff
-	AND
-	SWAP1
-	PUSH 32
-	SHR
-	DUP1
-	PUSH 0xffffffff
-	AND
-	SWAP1
-	PUSH 32
-	SHR
-
 	;; push A port[0] type
-	DUP4
-	PUSH 3
-	AND
+	DUP1
+	NODE_PORT_TYPE(0)
 
 	PUSH 5
 	SHL
@@ -194,8 +184,8 @@ ptr:
 
 num:
 	;; load A kind
-	DUP4
-	INFO_KIND
+	DUP1
+	NODE_KIND
 
 	;; A kind == CON -> @num_con
 	DUP1
@@ -215,63 +205,82 @@ num:
 
 	;; otherwise -> @num_ite
 num_ite:
-	DUP4
-	PUSH 0xffffff00
+	;; clear info bits (except A[2] type), A[0], and A[1]
+	DUP1
+	PUSH 0x00000000000000000000000000000000ffffffffffffffff0000000000ff0000
 	AND
-	DUP5
-	INFO_TYPE(1)
+
+	;; set A'[0] type to A[1] type
+	DUP2
+	NODE_PORT_TYPE(1)
 	OR
 
-	;; net[a[0]] &= ~3
-	DUP3
+	;; set A'[0] to A[1]
+	DUP2
+	PUSH 0x0000000000000000ffffffffffffffff00000000000000000000000000000000
+	AND
+	PUSH 64
+	SHL
+	OR
+
+	;; set net[A'[0]] slot to 0
+	DUP1
+	NODE_PORT(0)
 	NET_LOAD
-	PUSH 0xfffffffcffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	PUSH 0xfffffffffffffffcffffffffffffffffffffffffffffffffffffffffffffffff
 	AND
 	SWAP1
 	MSTORE
 
-	SWAP1
-	ISZERO
-	JUMPI @num_ite_false
-
-	DUP4
-	PUSH 2
-	SHR
-	PUSH eval(3 << 2)
-	AND
-	PUSH eval(PORT_ERA << 4)
-	OR
-
-	OR
-
-	SWAP3
-	POP
-	PUSH 0xffffffff
-	SWAP2
-	SWAP1
-
-	;; nodes[a[1]] ^= 3
 	DUP2
+	NODE_PORT(0)
+	JUMPI @num_ite_true
+
+	;; set A'[1] type to ERA
+	PUSH eval(PORT_ERA << 8)
+	OR
+
+	SWAP1
+	POP
+	SWAP1
+
+	JUMP @store_A
+
+num_ite_true:
+	;; set A'[1] to A[2]
+	DUP2
+	PUSH 0x00000000000000000000000000000000ffffffffffffffff0000000000000000
+	AND
+	PUSH 64
+	SHL
+	OR
+
+	;; clear A'[2] and A'[2] type
+	PUSH 0xffffffffffffffffffffffffffffffff0000000000000000ffffffffff00ffff
+	AND
+
+	;; set A'[1] type to A[2] type
+	DUP2
+	NODE_PORT_TYPE(2)
+	PUSH 8
+	SHL
+	OR
+
+	;; set A'[2] type to ERA
+	PUSH eval(PORT_ERA << 16)
+	OR
+
+	;; net[A'[1]] ^= 3
+	DUP1
+	NODE_PORT(1)
 	NET_LOAD
-	PUSH 0x0000000300000000000000000000000000000000000000000000000000000000
+	PUSH 0x0000000000000003000000000000000000000000000000000000000000000000
 	XOR
 	SWAP1
 	MSTORE
 
-	JUMP @store_A
-
-num_ite_false:
-	DUP4
-	PUSH eval(3 << 4)
-	AND
-	PUSH eval(PORT_ERA << 2)
-	OR
-
-	OR
-
-	SWAP3
+	SWAP1
 	POP
-	PUSH 0xffffffff
 	SWAP1
 
 	JUMP @store_A
@@ -279,10 +288,17 @@ num_ite_false:
 num_opI:
 	POP
 
-	;; load op code
-	DUP4
-	PUSH 8
-	SHR
+	;; push A[1]
+	DUP1
+	NODE_PORT(1)
+
+	;; push A[0]
+	DUP2
+	NODE_PORT(0)
+
+	;; push op code
+	DUP3
+	NODE_LABEL
 
 	;; jump to op label
 	PUSH 5
@@ -336,99 +352,99 @@ num_opI_eql:
 	EQ
 
 num_opI_finish:
-	PUSH 224
+	;; shift result into the upper 64-bits
+	PUSH 192
 	SHL
 
-	;; XXX: condition on A type[2] == PTR
-
-	;; load net[A[2]]
-	SWAP1
-	NET_LOAD
-
-	;; set port to result
-	PUSH 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-	AND
-	DUP3
-	OR
 	DUP2
-	MSTORE
-	SWAP1
+	NODE_PORT(2)
+
+	NET_SET(PORT_NUM, 2)
 	POP
-
-	;; set port type to NUM
-	PUSH 0xf
-	OR
-	DUP1
-	MLOAD
-	PUSH 1
-	OR
-	SWAP1
-	MSTORE8
-
+	POP
 	POP
 	;; XXX: free A addr
-	POP
 	JUMP @return
 
 num_opII:
-	;; swap A[0] and A[1]
-	SWAP1
-
-	SWAP3
-	PUSH eval(NODE_OP1 << 6 | PORT_NUM << 2)
-
-	;; push A[3] & ~(3 << 6 | 3 << 0 | 3 << 2)
-	DUP2
-	PUSH 0xffffff30
+	DUP1
+	PUSH 0xffffffffffffffffffffffff00ff0000
 	AND
 
-	;; push A type[1]
-	SWAP2
-	INFO_TYPE(1)
+	;; set A'[1] to A[0]
+	DUP2
+	PUSH 64
+	SHR
+	PUSH 0x0000000000000000ffffffffffffffff00000000000000000000000000000000
+	AND
+	OR
 
-	DUP1
-	PUSH 0
-	LT
-	JUMPI @num_opII_nonptr
+	;; set A'[0] to A[1]
+	DUP2
+	PUSH 64
+	SHL
+	PUSH 0xffffffffffffffff000000000000000000000000000000000000000000000000
+	AND
+	OR
+
+	DUP2
+	NODE_PORT_TYPE(1)
+	OR
+
+	PUSH eval(NODE_OP1 << 24 | PORT_NUM << 8)
+	OR
+
+	SWAP1
+	POP
+	SWAP1
+
+	;; push A' type[0]
+	DUP2
+	NODE_PORT_TYPE(0)
+
+	JUMPI @store_A
 
 	;; load net[A[0]]
-	DUP6
+	DUP2
+	NODE_PORT(0)
 	NET_LOAD
 
 	;; set port to 0 then store
-	PUSH 0xfffffffcffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	PUSH 0xfffffffffffffffcffffffffffffffffffffffffffffffffffffffffffffffff
 	AND
 	SWAP1
 	MSTORE
-
-num_opII_nonptr:
-	OR
-	OR
-	SWAP3
 
 	JUMP @store_A
 
 num_con:
 	POP
 
-	DUP4
-	INFO_TYPE(1)
+	DUP1
+	PUSH 0xffffffffffffffff000000000000000000000000000000000000000000000000
+	AND
+
+	DUP2
+	NODE_PORT_TYPE(1)
 	JUMPI @num_con_II
 
-	NET_SET(PORT_NUM)
+	DUP2
+	NODE_PORT(1)
+	NET_SET(PORT_NUM, 2)
 
 num_con_II:
 	SWAP1
-	POP
 
-	DUP3
-	INFO_TYPE(2)
+	DUP1
+	NODE_PORT_TYPE(2)
 	JUMPI @num_con_done
 
-	NET_SET(PORT_NUM)
+	NODE_PORT(2)
+	NET_SET(PORT_NUM, 2)
+
+	PUSH 0 ;; to equilize stack between branches
 
 num_con_done:
-	POP
 	POP
 	POP
 	POP
@@ -436,59 +452,32 @@ num_con_done:
 	JUMP @return
 
 era:
-	POP
-
 	;; check if port 1 type is PORT_PTR
-	DUP3
-	INFO_TYPE(1)
+	DUP1
+	NODE_PORT_TYPE(1)
 	JUMPI @era_II
 
-	PUSH 0xffffffff
+	DUP1
+	NODE_PORT(1)
 	NET_SET(PORT_ERA)
-	POP
 
 era_II:
-	POP
-
 	;; check if port 2 type is PORT_PTR
-	DUP2
-	INFO_TYPE(2)
+	DUP1
+	NODE_PORT_TYPE(2)
 	JUMPI @era_done
 
-	PUSH 0xffffffff
+	DUP1
+	NODE_PORT(2)
 	NET_SET(PORT_ERA)
-	POP
 
 era_done:
-	POP
 	POP
 	POP
 	;; XXX: free redex
 	JUMP @return
 
 store_A:
-	;; load A[0:3] into stack[0] bits 128:255
-	PUSH 96
-	SHL
-	SWAP1
-	PUSH 64
-	SHL
-	OR
-	SWAP1
-	PUSH 32
-	SHL
-	OR
-	OR
-	PUSH 128
-	SHL
-
-	;; store stack[0] into net[A addr]
-	DUP2
-	MLOAD
-	PUSH 0xffffffffffffffffffffffffffffffff
-	AND
-	OR
-	SWAP1
 	MSTORE
 
 return:
