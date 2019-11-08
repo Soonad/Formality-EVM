@@ -4,7 +4,7 @@ EVM implementation of Formality
 
 ## Requirements
 
-- go-ethereum containing [b0b27752] (2019-10-29)
+- go-ethereum v1.9.7 or newer ([2e6aa596] required for tests, not yet upstream).
 
 ## Interaction net representation
 
@@ -37,4 +37,4 @@ This has a couple advantages:
 - `NUM` - `ITE`: DONE
 - `ERA` - ` * `: DONE
 
-[b0b27752]: https://github.com/ethereum/go-ethereum/commit/b0b277525cb4e476deb461de1b5827a33daa2086
+[2e6aa596]: https://github.com/ethereum/go-ethereum/commit/2e6aa5962e1b26ab6a0339551bff9713734c1706
