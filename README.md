@@ -12,7 +12,7 @@ Formality-EVM currently uses a slightly different net representation to
 simplify things and minimize gas used in rewrites:
 
 | Bits    | Description                            |
-|--------------------------------------------------|
+|---------|----------------------------------------|
 | 0:63    | main port                              |
 | 64:127  | aux0 port                              |
 | 128:191 | aux1 port                              |
