@@ -9,20 +9,22 @@ EVM implementation of Formality
 ## Interaction net representation
 
 Formality-EVM currently uses a slightly different net representation to
-simplify things and minimize gas used in rewrites:
+simplify things and minimize gas used in rewrites. Each node consists
+of four 64-bit integers with big-endian byte-order. They are used to
+store the main port, aux0 port, aux1 port, and node info.
 
-| Bits    | Description                            |
-|---------|----------------------------------------|
-| 0:63    | main port                              |
-| 64:127  | aux0 port                              |
-| 128:191 | aux1 port                              |
-| 192:199 | main port type (`PTR`, `NUM`, `ERA`)   |
-| 200:207 | aux0 port type (`PTR`, `NUM`, `ERA`)   |
-| 208:215 | aux1 port type (`PTR`, `NUM`, `ERA`)   |
-| 216:223 | node type (`CON`, `OP1`, `OP2`, `ITE`) |
-| 224:255 | node label                             |
+The node info integer specifies the type of each of the ports, the node
+kind, the node type, and the node label.
 
-This has a couple advantages:
+| Bits  | Size | Description                            |
+|:-----:|-----:|----------------------------------------|
+|  0:7  |    8 | main port type (`PTR`, `NUM`, `ERA`)   |
+|  8:15 |    8 | aux0 port type (`PTR`, `NUM`, `ERA`)   |
+| 16:23 |    8 | aux1 port type (`PTR`, `NUM`, `ERA`)   |
+| 24:31 |    8 | node type (`CON`, `OP1`, `OP2`, `ITE`) |
+| 32:63 |   32 | node label                             |
+
+This encoding has a couple advantages:
 
 - Nodes fill a single EVM register
 - Port type of neighboring nodes can be changed in a single `MSTORE8`,
