@@ -10,16 +10,30 @@ if [ $# = 0 ]; then
 	set -- test/*
 fi
 
+input() {
+	{
+		printf '%064x' "$redex"
+		while read main aux0 aux1 info; do
+			printf '%s' "$main" "$aux0" "$aux1" "$info"
+		done
+	} >"$tmp/input"
+}
+
+output() {
+	while read main aux0 aux1 info; do
+		printf ' %s %s %s %s\n' "$main" "$aux0" "$aux1" "$info"
+	done > "$tmp/want"
+}
+
 failed=0
 
 for test; do
 	pass=0
 	echo "Running test $test..."
 	echo
+	rm -f "$tmp/input" "$tmp/out" "$tmp/got" "$tmp/want"
 	. "$test"
-	printf ' %s %s %s %s\n' $output >"$tmp/want"
-	input="$(printf %064x $redex)$(printf %s $input)"
-	if $EVM --statdump --input "$input" --codefile net.evm run >"$tmp/out"; then
+	if $EVM --statdump --inputfile "$tmp/input" --codefile net.evm run >"$tmp/out"; then
 		tail -c +67 "$tmp/out" | sed '
 			s,[[:xdigit:]]\{32\},&\n,g
 			s,[[:xdigit:]]\{8\}, &,g
