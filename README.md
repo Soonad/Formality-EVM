@@ -37,4 +37,10 @@ This has a couple advantages:
 - `NUM` - `ITE`: DONE
 - `ERA` - ` * `: DONE
 
+## Implementation notes
+
+The source code is first processed with [m4(1)] to enable use of macros
+for common code.
+
 [2e6aa596]: https://github.com/ethereum/go-ethereum/commit/2e6aa5962e1b26ab6a0339551bff9713734c1706
+[m4(1)]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/m4.html
