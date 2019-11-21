@@ -4,7 +4,7 @@ EVM implementation of Formality
 
 ## Requirements
 
-- go-ethereum v1.9.7 or newer ([2e6aa596] required for tests, not yet upstream).
+- go-ethereum v1.9.7 or newer ([9e71f55b] required for tests).
 
 ## Interaction net representation
 
@@ -44,5 +44,5 @@ This encoding has a couple advantages:
 The source code is first processed with [m4(1)] to enable use of macros
 for common code.
 
-[2e6aa596]: https://github.com/ethereum/go-ethereum/commit/2e6aa5962e1b26ab6a0339551bff9713734c1706
+[9e71f55b]: https://github.com/ethereum/go-ethereum/commit/9e71f55bfab91a26f5cfc06f0a4e48839b25f249
 [m4(1)]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/m4.html
