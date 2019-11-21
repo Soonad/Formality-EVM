@@ -126,7 +126,7 @@ define(ALLOC,
 	DUP1
 	PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 	EQ
-	JUMPI @grow
+	JUMPI @alloc_grow`'alloc_id
 	;; reuse
 	DUP1
 	PUSH 3
