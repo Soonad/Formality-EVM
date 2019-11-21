@@ -120,7 +120,8 @@ define(NODE_LABEL,
 ;; input  = [...]
 ;; output = [pointer, ...]
 define(ALLOC,
-	`define(`alloc_id', incr(alloc_id))PUSH FREE_LIST
+	`define(`alloc_id', incr(alloc_id))dnl
+	PUSH FREE_LIST
 	MLOAD
 	DUP1
 	PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -150,6 +151,24 @@ alloc_grow`'alloc_id:
 alloc_done`'alloc_id:')
 define(alloc_id, 0)
 
+;; input  = [pointer, ...]
+;; output = [...]
+define(FREE,
+	`;; update free list
+	PUSH FREE_LIST
+	MLOAD
+	DUP2
+	PUSH FREE_LIST
+	MSTORE
+
+	;; use node as pointer to rest of free list
+	SWAP1
+	PUSH 3
+	SHL
+	PUSH NET
+	ADD
+	MSTORE')
+
 define(STORE_LABEL,
 `PUSH $3
 PUSH eval($1 + $2 * 32)
@@ -178,6 +197,11 @@ STORE_LABEL(OP_TABLE, OP_EQL, @num_opI_eql)
 STORE_LABEL(TYPE_TABLE, PORT_PTR, @ptr)
 STORE_LABEL(TYPE_TABLE, PORT_NUM, @num)
 STORE_LABEL(TYPE_TABLE, PORT_ERA, @era)
+
+;; set free list terminator
+PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PUSH FREE_LIST
+MSTORE
 
 ;; load net into memory[NET] and net size into memory[NET_SIZE]
 PUSH INPUT_NET
@@ -221,10 +245,11 @@ ptr:
 	;; load node B
 	DUP1
 	NODE_PORT(0)
+	DUP1
 	NET_LOAD
 
 	;; push A kind
-	DUP3
+	DUP4
 	NODE_KIND
 
 	;; push B kind
@@ -238,7 +263,7 @@ ptr_permute:
 	ISZERO
 
 	;; push A label == B label
-	DUP6
+	DUP7
 	NODE_LABEL
 	DUP5
 	NODE_LABEL
@@ -284,6 +309,7 @@ ptr_permute:
 
 	JUMPI @unary_dup
 
+	;; XXX: probably needs stack index update
 	;; swap A addr and B addr
 	SWAP5
 	SWAP3
@@ -312,11 +338,13 @@ annihilation:
 	NODE_PORT(1)
 	PUSH 192
 	SHL
-	DUP4
+	DUP5
 	NODE_PORT(1)
 	;; XXX: might not be PORT_PTR, need to update macro
 	NET_SET(PORT_PTR, 2)
 	POP
+
+	;; XXX: reload nodes in case of self-edges
 
 annihilation_aII:
 	;; A[2] type != PTR
@@ -328,11 +356,13 @@ annihilation_aII:
 	NODE_PORT(2)
 	PUSH 192
 	SHL
-	DUP4
+	DUP5
 	NODE_PORT(2)
 	;; XXX: might not be PORT_PTR, need to update macro
 	NET_SET(PORT_PTR, 2)
 	POP
+
+	;; XXX: reload nodes in case of self-edges
 
 annihilation_bI:
 	;; B[1] type != PTR
@@ -340,7 +370,7 @@ annihilation_bI:
 	NODE_PORT_TYPE(1)
 	JUMPI @annihilation_bII
 
-	DUP3
+	DUP4
 	NODE_PORT(1)
 	PUSH 192
 	SHL
@@ -350,13 +380,15 @@ annihilation_bI:
 	NET_SET(PORT_PTR, 2)
 	POP
 
+	;; XXX: reload nodes in case of self-edges
+
 annihilation_bII:
 	;; B[2] type != PTR
 	DUP1
 	NODE_PORT_TYPE(2)
 	JUMPI @annihilation_end
 
-	DUP3
+	DUP4
 	NODE_PORT(2)
 	PUSH 192
 	SHL
@@ -367,13 +399,15 @@ annihilation_bII:
 	POP
 
 annihilation_end:
+	;; free B
 	POP
-	;; XXX: free B
 	POP
+	FREE
 
+	;; free A
 	POP
-	;; XXX: free A
 	POP
+	FREE
 
 	JUMP @return
 
@@ -566,7 +600,7 @@ num_opI_finish:
 	POP
 	POP
 	POP
-	;; XXX: free A addr
+	FREE
 	JUMP @return
 
 num_opII:
@@ -651,7 +685,7 @@ num_con_done:
 	POP
 	POP
 	POP
-	;; XXX: free redex
+	FREE
 	JUMP @return
 
 era:
@@ -677,15 +711,14 @@ era_II:
 era_done:
 	POP
 	POP
-	;; XXX: free redex
+	FREE
 	JUMP @return
 
 store_A:
 	MSTORE
-
-return:
 	POP
 
+return:
 	;; calculate gas used
 	GAS
 	SWAP1
