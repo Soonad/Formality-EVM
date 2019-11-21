@@ -2,7 +2,7 @@
 #              /
 # NUM(123)--CON
 #              \
-#                --CON
+#               --CON
 
 redex=0
 input <<EOF
