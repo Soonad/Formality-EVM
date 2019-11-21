@@ -179,6 +179,170 @@ rewrite:
 	JUMP
 
 ptr:
+	;; load node B
+	DUP1
+	NODE_PORT(0)
+	NET_LOAD
+
+	;; push A kind
+	DUP3
+	NODE_KIND
+
+	;; push B kind
+	DUP2
+	NODE_KIND
+
+ptr_permute:
+	;; push A kind != CON
+	DUP2
+	ISZERO
+	ISZERO
+
+	;; push A label == B label
+	DUP6
+	NODE_LABEL
+	DUP5
+	NODE_LABEL
+	EQ
+
+	OR
+
+	;; push [A kind == B kind]
+	DUP3
+	DUP3
+	EQ
+
+	AND
+
+	JUMPI @annihilation
+
+	;; push A kind == CON
+	DUP2
+	ISZERO
+
+	;; push B kind != OP1
+	DUP2
+	PUSH NODE_OP1
+	EQ
+	ISZERO
+
+	AND
+
+	JUMPI @binary_dup
+
+	;; push A kind != OP2
+	DUP2
+	PUSH NODE_OP2
+	EQ
+	ISZERO
+
+	;; push B kind == OP1
+	DUP2
+	PUSH NODE_OP1
+	EQ
+
+	AND
+
+	JUMPI @unary_dup
+
+	;; swap A addr and B addr
+	SWAP5
+	SWAP3
+	SWAP5
+
+	;; swap A node and B node
+	SWAP4
+	SWAP2
+	SWAP4
+
+	;; swap A kind and B kind
+	SWAP1
+
+	JUMP @ptr_permute
+
+annihilation:
+	POP
+	POP
+
+	;; A[1] type != PTR
+	DUP3
+	NODE_PORT_TYPE(1)
+	JUMPI @annihilation_aII
+
+	DUP1
+	NODE_PORT(1)
+	PUSH 192
+	SHL
+	DUP4
+	NODE_PORT(1)
+	;; XXX: might not be PORT_PTR, need to update macro
+	NET_SET(PORT_PTR, 2)
+	POP
+
+annihilation_aII:
+	;; A[2] type != PTR
+	DUP3
+	NODE_PORT_TYPE(2)
+	JUMPI @annihilation_bI
+
+	DUP1
+	NODE_PORT(2)
+	PUSH 192
+	SHL
+	DUP4
+	NODE_PORT(2)
+	;; XXX: might not be PORT_PTR, need to update macro
+	NET_SET(PORT_PTR, 2)
+	POP
+
+annihilation_bI:
+	;; B[1] type != PTR
+	DUP1
+	NODE_PORT_TYPE(1)
+	JUMPI @annihilation_bII
+
+	DUP3
+	NODE_PORT(1)
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(1)
+	;; XXX: might not be PORT_PTR, need to update macro
+	NET_SET(PORT_PTR, 2)
+	POP
+
+annihilation_bII:
+	;; B[2] type != PTR
+	DUP1
+	NODE_PORT_TYPE(2)
+	JUMPI @annihilation_end
+
+	DUP3
+	NODE_PORT(2)
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(2)
+	;; XXX: might not be PORT_PTR, need to update macro
+	NET_SET(PORT_PTR, 2)
+	POP
+
+annihilation_end:
+	POP
+	;; XXX: free B
+	POP
+
+	POP
+	;; XXX: free A
+	POP
+
+	JUMP @return
+
+binary_dup:
+	;; TODO: implement
+	STOP
+
+unary_dup:
 	;; TODO: implement
 	STOP
 
