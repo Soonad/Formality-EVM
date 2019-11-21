@@ -38,6 +38,9 @@ This encoding has a couple advantages:
 - `NUM` - `OP2`: DONE
 - `NUM` - `ITE`: DONE
 - `ERA` - ` * `: DONE
+- Annihilation: DONE (mostly, needs some tweaks to the `NET_SET` macro to store the right port type)
+- Unary duplication: TODO
+- Binary duplication: TODO
 
 ## Implementation notes
 
