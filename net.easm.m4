@@ -9,10 +9,14 @@ define(INPUT_NET, 0x20)
 define(OP_TABLE, 0x0)
 ;; address of type jump table in memory
 define(TYPE_TABLE, 0x200)
-;; address of scratch memory
-define(SCRATCH, 0x300)
+;; address of free list memory
+define(FREE_LIST, 0x300)
+;; address of net size in memory
+define(NET_SIZE, 0x320)
 ;; address of net in memory
 define(NET, 0x400)
+;; address of gas used in memory (returned with net)
+define(GAS_USED, eval(NET - 0x20))
 
 define(PORT_PTR, 0)
 define(PORT_NUM, 1)
@@ -142,13 +146,15 @@ STORE_LABEL(TYPE_TABLE, PORT_PTR, @ptr)
 STORE_LABEL(TYPE_TABLE, PORT_NUM, @num)
 STORE_LABEL(TYPE_TABLE, PORT_ERA, @era)
 
-;; load net into memory[NET]
+;; load net into memory[NET] and net size into memory[NET_SIZE]
 PUSH INPUT_NET
 DUP1
 CALLDATASIZE
 SUB
 DUP1
-SWAP2
+PUSH NET_SIZE
+MSTORE
+SWAP1
 PUSH NET
 CALLDATACOPY
 
@@ -161,7 +167,7 @@ SHL
 GAS
 SWAP1
 
-;; stack = [redex, gas, net size]
+;; stack = [redex, gas]
 rewrite:
 	;; load node A
 	DUP1
@@ -651,13 +657,14 @@ return:
 	GAS
 	SWAP1
 	SUB
-	PUSH eval(NET - 32)
+	PUSH GAS_USED
 	SWAP1
 	DUP2
 	MSTORE
 
 	;; return net
-	SWAP1
+	PUSH NET_SIZE
+	MLOAD
 	PUSH 32
 	ADD
 	SWAP1
