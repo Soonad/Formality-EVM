@@ -16,7 +16,7 @@ input() {
 		while read main aux0 aux1 info; do
 			printf '%016x' "$main" "$aux0" "$aux1" "$info"
 		done
-	} >"$tmp/input"
+	} >"$test.input"
 }
 
 output() {
@@ -31,9 +31,9 @@ for test; do
 	pass=0
 	echo "Running test $test..."
 	echo
-	rm -f "$tmp/input" "$tmp/out" "$tmp/got" "$tmp/want"
+	rm -f "$tmp/out" "$tmp/got" "$tmp/want"
 	. "$test"
-	if $EVM --statdump --inputfile "$tmp/input" --codefile net.evm run >"$tmp/out"; then
+	if $EVM --statdump --inputfile "$test.input" --codefile net.evm run >"$tmp/out"; then
 		tail -c +67 "$tmp/out" | sed '
 			s,[[:xdigit:]]\{64\},&\n,g
 			s,[[:xdigit:]]\{16\}, &,g
