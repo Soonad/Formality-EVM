@@ -7,7 +7,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 if [ $# = 0 ]; then
-	set -- test/*
+	set -- test/*.test
 fi
 
 input() {
