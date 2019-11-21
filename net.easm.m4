@@ -117,6 +117,39 @@ define(NODE_LABEL,
 	PUSH 0xffffffff
 	AND')
 
+;; input  = [...]
+;; output = [pointer, ...]
+define(ALLOC,
+	`define(`alloc_id', incr(alloc_id))PUSH FREE_LIST
+	MLOAD
+	DUP1
+	PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	EQ
+	JUMPI @grow
+	;; reuse
+	DUP1
+	PUSH 3
+	SHL
+	PUSH NET
+	ADD
+	MLOAD
+	PUSH FREE_LIST
+	MSTORE
+	JUMP @alloc_done
+alloc_grow`'alloc_id:
+	POP
+	PUSH NET_SIZE
+	MLOAD
+	DUP1
+	PUSH 32
+	ADD
+	PUSH NET_SIZE
+	MSTORE
+	PUSH 3
+	SHR
+alloc_done`'alloc_id:')
+define(alloc_id, 0)
+
 define(STORE_LABEL,
 `PUSH $3
 PUSH eval($1 + $2 * 32)
