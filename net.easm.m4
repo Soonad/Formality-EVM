@@ -176,21 +176,21 @@ MSTORE')
 
 divert(0)dnl
 ;; setup OP1 jump table in memory[OP_TABLE]
-STORE_LABEL(OP_TABLE, OP_ADD, @num_opI_add)
-STORE_LABEL(OP_TABLE, OP_SUB, @num_opI_sub)
-STORE_LABEL(OP_TABLE, OP_MUL, @num_opI_mul)
-STORE_LABEL(OP_TABLE, OP_DIV, @num_opI_div)
-STORE_LABEL(OP_TABLE, OP_MOD, @num_opI_mod)
-STORE_LABEL(OP_TABLE, OP_POW, @num_opI_pow)
-STORE_LABEL(OP_TABLE, OP_AND, @num_opI_and)
-STORE_LABEL(OP_TABLE, OP_BOR, @num_opI_bor)
-STORE_LABEL(OP_TABLE, OP_XOR, @num_opI_xor)
-STORE_LABEL(OP_TABLE, OP_NOT, @num_opI_not)
-STORE_LABEL(OP_TABLE, OP_SHR, @num_opI_shr)
-STORE_LABEL(OP_TABLE, OP_SHL, @num_opI_shl)
-STORE_LABEL(OP_TABLE, OP_GTR, @num_opI_gtr)
-STORE_LABEL(OP_TABLE, OP_LES, @num_opI_les)
-STORE_LABEL(OP_TABLE, OP_EQL, @num_opI_eql)
+STORE_LABEL(OP_TABLE, OP_ADD, @num_op1_add)
+STORE_LABEL(OP_TABLE, OP_SUB, @num_op1_sub)
+STORE_LABEL(OP_TABLE, OP_MUL, @num_op1_mul)
+STORE_LABEL(OP_TABLE, OP_DIV, @num_op1_div)
+STORE_LABEL(OP_TABLE, OP_MOD, @num_op1_mod)
+STORE_LABEL(OP_TABLE, OP_POW, @num_op1_pow)
+STORE_LABEL(OP_TABLE, OP_AND, @num_op1_and)
+STORE_LABEL(OP_TABLE, OP_BOR, @num_op1_bor)
+STORE_LABEL(OP_TABLE, OP_XOR, @num_op1_xor)
+STORE_LABEL(OP_TABLE, OP_NOT, @num_op1_not)
+STORE_LABEL(OP_TABLE, OP_SHR, @num_op1_shr)
+STORE_LABEL(OP_TABLE, OP_SHL, @num_op1_shl)
+STORE_LABEL(OP_TABLE, OP_GTR, @num_op1_gtr)
+STORE_LABEL(OP_TABLE, OP_LES, @num_op1_les)
+STORE_LABEL(OP_TABLE, OP_EQL, @num_op1_eql)
 ;; XXX: floating point operations?
 
 ;; setup port 0 type jump table in memory[TYPE_TABLE]
@@ -332,7 +332,7 @@ annihilation:
 	;; A[1] type != PTR
 	DUP3
 	NODE_PORT_TYPE(1)
-	JUMPI @annihilation_aII
+	JUMPI @annihilation_A2
 
 	DUP1
 	NODE_PORT(1)
@@ -346,11 +346,11 @@ annihilation:
 
 	;; XXX: reload nodes in case of self-edges
 
-annihilation_aII:
+annihilation_A2:
 	;; A[2] type != PTR
 	DUP3
 	NODE_PORT_TYPE(2)
-	JUMPI @annihilation_bI
+	JUMPI @annihilation_B1
 
 	DUP1
 	NODE_PORT(2)
@@ -364,11 +364,11 @@ annihilation_aII:
 
 	;; XXX: reload nodes in case of self-edges
 
-annihilation_bI:
+annihilation_B1:
 	;; B[1] type != PTR
 	DUP1
 	NODE_PORT_TYPE(1)
-	JUMPI @annihilation_bII
+	JUMPI @annihilation_B2
 
 	DUP4
 	NODE_PORT(1)
@@ -382,7 +382,7 @@ annihilation_bI:
 
 	;; XXX: reload nodes in case of self-edges
 
-annihilation_bII:
+annihilation_B2:
 	;; B[2] type != PTR
 	DUP1
 	NODE_PORT_TYPE(2)
@@ -433,12 +433,12 @@ num:
 	DUP1
 	PUSH NODE_OP1
 	EQ
-	JUMPI @num_opI
+	JUMPI @num_op1
 
-	;; A kind == OP2 -> @num_opII
+	;; A kind == OP2 -> @num_op2
 	PUSH NODE_OP2
 	EQ
-	JUMPI @num_opII
+	JUMPI @num_op2
 
 	;; otherwise -> @num_ite
 num_ite:
@@ -522,7 +522,7 @@ num_ite_true:
 
 	JUMP @store_A
 
-num_opI:
+num_op1:
 	POP
 
 	;; push A[1]
@@ -543,52 +543,52 @@ num_opI:
 	MLOAD
 	JUMP
 
-num_opI_add:
+num_op1_add:
 	ADD
-	JUMP @num_opI_finish
-num_opI_sub:
+	JUMP @num_op1_finish
+num_op1_sub:
 	SUB
-	JUMP @num_opI_finish
-num_opI_mul:
+	JUMP @num_op1_finish
+num_op1_mul:
 	MUL
-	JUMP @num_opI_finish
-num_opI_div:
+	JUMP @num_op1_finish
+num_op1_div:
 	DIV
-	JUMP @num_opI_finish
-num_opI_mod:
+	JUMP @num_op1_finish
+num_op1_mod:
 	MOD
-	JUMP @num_opI_finish
-num_opI_pow:
+	JUMP @num_op1_finish
+num_op1_pow:
 	EXP
-	JUMP @num_opI_finish
-num_opI_and:
+	JUMP @num_op1_finish
+num_op1_and:
 	AND
-	JUMP @num_opI_finish
-num_opI_bor:
+	JUMP @num_op1_finish
+num_op1_bor:
 	OR
-	JUMP @num_opI_finish
-num_opI_xor:
+	JUMP @num_op1_finish
+num_op1_xor:
 	XOR
-	JUMP @num_opI_finish
-num_opI_not:
+	JUMP @num_op1_finish
+num_op1_not:
 	NOT
-	JUMP @num_opI_finish
-num_opI_shr:
+	JUMP @num_op1_finish
+num_op1_shr:
 	SHR
-	JUMP @num_opI_finish
-num_opI_shl:
+	JUMP @num_op1_finish
+num_op1_shl:
 	SHL
-	JUMP @num_opI_finish
-num_opI_gtr:
+	JUMP @num_op1_finish
+num_op1_gtr:
 	GT
-	JUMP @num_opI_finish
-num_opI_les:
+	JUMP @num_op1_finish
+num_op1_les:
 	LT
-	JUMP @num_opI_finish
-num_opI_eql:
+	JUMP @num_op1_finish
+num_op1_eql:
 	EQ
 
-num_opI_finish:
+num_op1_finish:
 	;; shift result into the upper 64-bits
 	PUSH 192
 	SHL
@@ -603,7 +603,7 @@ num_opI_finish:
 	FREE
 	JUMP @return
 
-num_opII:
+num_op2:
 	DUP1
 	PUSH 0xffffffffffffffffffffffff00ff0000
 	AND
@@ -663,13 +663,13 @@ num_con:
 
 	DUP2
 	NODE_PORT_TYPE(1)
-	JUMPI @num_con_II
+	JUMPI @num_con_2
 
 	DUP2
 	NODE_PORT(1)
 	NET_SET(PORT_NUM, 2)
 
-num_con_II:
+num_con_2:
 	SWAP1
 
 	DUP1
@@ -692,13 +692,13 @@ era:
 	;; check if port 1 type is PORT_PTR
 	DUP1
 	NODE_PORT_TYPE(1)
-	JUMPI @era_II
+	JUMPI @era_2
 
 	DUP1
 	NODE_PORT(1)
 	NET_SET(PORT_ERA)
 
-era_II:
+era_2:
 	;; check if port 2 type is PORT_PTR
 	DUP1
 	NODE_PORT_TYPE(2)
