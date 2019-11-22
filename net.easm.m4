@@ -1,4 +1,5 @@
 divert(-1)
+changequote([, ])
 
 ;; offset of redex in input
 define(INPUT_REDEX, 0x0)
@@ -46,28 +47,28 @@ define(OP_EQL, 14)
 ;; input  = [pointer, ...]
 ;; output = [port value, port address, ...]
 define(NET_LOAD,
-	`PUSH 3
+	[PUSH 3
 	SHL
 	PUSH NET
 	ADD
 	DUP1
-	MLOAD')
+	MLOAD])
 
 ;; usage  NET_SET(type, stack index of value in highest 64 bits)
 ;; input  = [pointer, ...]
 ;; output = [...]
 define(NET_SET,
-	`DUP1
+	[DUP1
 	NET_LOAD
 
 	;; clear old value
 	PUSH 0x0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff
 	AND
 
-	ifelse($2, `', `',
-	`;; set new value
-	DUP`'eval($2 + 2)
-	OR')
+	ifelse($2, [], [],
+	[;; set new value
+	DUP[]eval($2 + 2)
+	OR])
 
 	;; store
 	DUP2
@@ -86,47 +87,47 @@ define(NET_SET,
 	;; set port type
 	PUSH $1
 	SWAP1
-	MSTORE8')
+	MSTORE8])
 
 ;; input  = [node, ...]
 ;; output = [kind, ...]
 define(NODE_KIND,
-	`PUSH 28
-	BYTE')
+	[PUSH 28
+	BYTE])
 
 ;; input  = [node, ...]
 ;; output = [type of port N, ...]
 define(NODE_PORT_TYPE,
-	`PUSH eval(31 - $1)
-	BYTE')
+	[PUSH eval(31 - $1)
+	BYTE])
 
 ;; input  = [node, ...]
 ;; output = [port N, ...]
 define(NODE_PORT,
-	`PUSH eval(192 - $1 * 64)
+	[PUSH eval(192 - $1 * 64)
 	SHR
-	ifelse($1, 0, `',
-	`PUSH 0xffffffffffffffff
-	AND')')
+	ifelse($1, 0, [],
+	[PUSH 0xffffffffffffffff
+	AND])])
 
 ;; input  = [node, ...]
 ;; output = [label, ...]
 define(NODE_LABEL,
-	`PUSH 32
+	[PUSH 32
 	SHR
 	PUSH 0xffffffff
-	AND')
+	AND])
 
 ;; input  = [...]
 ;; output = [pointer, ...]
 define(ALLOC,
-	`define(`alloc_id', incr(alloc_id))dnl
+	[define([alloc_id], incr(alloc_id))dnl
 	PUSH FREE_LIST
 	MLOAD
 	DUP1
 	PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 	EQ
-	JUMPI @alloc_grow`'alloc_id
+	JUMPI @alloc_grow[]alloc_id
 	;; reuse
 	DUP1
 	PUSH 3
@@ -137,7 +138,7 @@ define(ALLOC,
 	PUSH FREE_LIST
 	MSTORE
 	JUMP @alloc_done
-alloc_grow`'alloc_id:
+alloc_grow[]alloc_id:
 	POP
 	PUSH NET_SIZE
 	MLOAD
@@ -148,13 +149,13 @@ alloc_grow`'alloc_id:
 	MSTORE
 	PUSH 3
 	SHR
-alloc_done`'alloc_id:')
+alloc_done[]alloc_id:])
 define(alloc_id, 0)
 
 ;; input  = [pointer, ...]
 ;; output = [...]
 define(FREE,
-	`;; update free list
+	[;; update free list
 	PUSH FREE_LIST
 	MLOAD
 	DUP2
@@ -167,12 +168,12 @@ define(FREE,
 	SHL
 	PUSH NET
 	ADD
-	MSTORE')
+	MSTORE])
 
 define(STORE_LABEL,
-`PUSH $3
+[PUSH $3
 PUSH eval($1 + $2 * 32)
-MSTORE')
+MSTORE])
 
 divert(0)dnl
 ;; setup OP1 jump table in memory[OP_TABLE]
