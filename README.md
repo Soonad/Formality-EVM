@@ -2,9 +2,47 @@
 
 EVM implementation of Formality
 
+`net.easm` implements the rewrite function of FM-Net.
+
+It also performs the following operations before `rewrite`:
+
+- Set up a jump table in memory (at address `0x0`) for `OP1` numeric
+  operations. An OP1 node with label `N` will load the address stored at
+  `N * 32`, then jump to it.
+- Set up a jump table in memory (at address `0x200`) for main port type.
+- Store the free list terminator (-1) at address `0x300`.
+- Store the interaction net size (in bytes) at address `0x320`.
+- Load the interaction net from call data (EVM input) at offset `0x20`
+  into memory (at address `0x400`).
+- Load the redex index from call data at offset `0x0` onto the stack.
+- Store the current gas remaining on the stack.
+
+These operations only need to be run once before a series of rewrites.
+
+It also performs the following operations after `rewrite`:
+
+- Calculate gas used in the rewrite operation.
+- Return the gas used (at offset `0x0`) and the rewritten net to
+  the caller (at offset `0x20`).
+
+The `rewrite` function is intended be called multiple times by a `reduce`
+function that is yet to be written.
+
 ## Requirements
 
 - go-ethereum containing [0bf6382e] (not yet upstream).
+
+## Debugging
+
+The `runtests` script will generate test inputs, run them through `evm`,
+and compare with the expected output. To debug an individual test, you can
+run `evm` manually with this input with the `--debug --nomemory`
+flags. One helpful technique is to add a `STOP` instruction at a certain
+point, in order to inspect the stack and verify your assumptions.
+
+```
+evm --codefile net.evm --inputfile test/num-op1.test.input --debug --nomemory run
+```
 
 ## Interaction net representation
 
