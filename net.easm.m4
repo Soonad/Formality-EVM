@@ -101,14 +101,24 @@ define(NODE_PORT_TYPE,
 	[PUSH eval(31 - $1)
 	BYTE])
 
+;; isolate port $1 of node and move into into port $2 (defaults to 3)
 ;; input  = [node, ...]
 ;; output = [port N, ...]
 define(NODE_PORT,
-	[PUSH eval(192 - $1 * 64)
-	SHR
-	ifelse($1, 0, [],
-	[PUSH 0xffffffffffffffff
-	AND])])
+[pushdef([shift_amount], eval(64 * (ifelse($2, [], 3, $2) - $1)))
+ifelse(shift_amount, 192, [],
+[	PUSH 0xffffffffffffffff[]substr(000000000000000000000000000000000000000000000000, eval($1 * 16))
+        AND
+])dnl
+ifelse(eval(shift_amount == 0), 1, [], eval(shift_amount > 0), 1,
+[	PUSH shift_amount
+        SHR
+],
+[	PUSH eval(-(shift_amount))
+        SHL
+])dnl
+popdef([shift_amount])dnl
+])
 
 ;; input  = [node, ...]
 ;; output = [label, ...]
@@ -336,9 +346,7 @@ annihilation:
 	JUMPI @annihilation_A2
 
 	DUP1
-	NODE_PORT(1)
-	PUSH 192
-	SHL
+	NODE_PORT(1, 0)
 	DUP5
 	NODE_PORT(1)
 	;; XXX: might not be PORT_PTR, need to update macro
@@ -354,9 +362,7 @@ annihilation_A2:
 	JUMPI @annihilation_B1
 
 	DUP1
-	NODE_PORT(2)
-	PUSH 192
-	SHL
+	NODE_PORT(2, 0)
 	DUP5
 	NODE_PORT(2)
 	;; XXX: might not be PORT_PTR, need to update macro
@@ -372,9 +378,7 @@ annihilation_B1:
 	JUMPI @annihilation_B2
 
 	DUP4
-	NODE_PORT(1)
-	PUSH 192
-	SHL
+	NODE_PORT(1, 0)
 	DUP2
 	NODE_PORT(1)
 	;; XXX: might not be PORT_PTR, need to update macro
@@ -390,9 +394,7 @@ annihilation_B2:
 	JUMPI @annihilation_end
 
 	DUP4
-	NODE_PORT(2)
-	PUSH 192
-	SHL
+	NODE_PORT(2, 0)
 	DUP2
 	NODE_PORT(2)
 	;; XXX: might not be PORT_PTR, need to update macro
