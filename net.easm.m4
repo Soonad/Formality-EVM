@@ -420,8 +420,138 @@ binary_dup:
 	STOP
 
 unary_dup:
-	;; TODO: implement
-	STOP
+	POP
+	POP
+
+	;; allocate node C
+	ALLOC
+
+	;; rewrite node A
+	;; stack = [C index, B, B addr, B index, A, A addr, A index]
+
+	;; A' kind and label = A kind and label
+	DUP5
+	PUSH 0xffffffffff000000
+	AND
+
+	;; A'[0] = B[2]
+	DUP3
+	NODE_PORT(2, 0)
+
+	OR
+
+	;; A'[0] type = B[2] port
+	DUP3
+	NODE_PORT_TYPE(2)
+
+	OR
+
+	;; A'[1] = B index | 2
+	DUP5
+	PUSH 2
+	OR
+	PUSH 128
+	SHL
+
+	OR
+
+	;; A'[2] = C index | 2
+	DUP2
+	PUSH 2
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	;; rewrite node B
+	;; stack = [A', C index, B, B addr, B index, A, A addr, A index]
+
+	;; B' kind, label, [1] = B kind, label, [1]
+	DUP3
+	PUSH 0x0000000000000000ffffffffffffffff0000000000000000ffffffffff00ff00
+	AND
+
+	;; B'[0] = A[1]
+	DUP7
+	NODE_PORT(1, 0)
+
+	OR
+
+	;; B'[0] type = A[1] type
+	DUP7
+	NODE_PORT_TYPE(1)
+
+	OR
+
+	;; B'[2] = A index | 1
+	DUP9
+	PUSH 1
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	;; rewrite node C
+	;; stack = [B', A', C index, B, B addr, B index, A, A addr, A index]
+
+	;; C' kind, label, [1] = B kind, label, [1]
+	DUP4
+	PUSH 0x0000000000000000ffffffffffffffff0000000000000000ffffffffff00ff00
+	AND
+
+	;; C'[0] = A[2]
+	DUP8
+	NODE_PORT(2, 0)
+
+	OR
+
+	;; C'[0] type = A[2] type
+	DUP8
+	NODE_PORT_TYPE(2)
+
+	OR
+
+	;; C'[2] = A index | 2
+	DUP10
+	PUSH 2
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	;; stack = [C', B', A', C index, B, B addr, B index, A, A addr, A index]
+
+	;; XXX: C'[0] reverse edge
+
+	SWAP4
+	POP
+
+	;; XXX: B'[0] reverse edge
+
+	SWAP5
+	POP
+
+	;; XXX: A'[0] reverse edge
+
+	SWAP7
+	POP
+
+	;; stack = [C index, C', B addr, B', A, A addr, A']
+
+	PUSH 3
+	SHL
+	PUSH NET
+	ADD
+
+	MSTORE
+	MSTORE
+	POP
+	MSTORE
+
+	jump @return
 
 num:
 	;; load A kind

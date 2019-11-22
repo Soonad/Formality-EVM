@@ -72,12 +72,12 @@ This encoding has a couple advantages:
 ## Current status
 
 - `NUM` - `CON`: DONE
-- `NUM` - `OP1`: DONE (mostly)
+- `NUM` - `OP1`: DONE
 - `NUM` - `OP2`: DONE
 - `NUM` - `ITE`: DONE
 - `ERA` - ` * `: DONE
 - Annihilation: DONE (mostly, needs some tweaks to the `NET_SET` macro to store the right port type)
-- Unary duplication: TODO
+- Unary duplication: DONE (mostly, needs to set reverse edges from neighbors)
 - Binary duplication: TODO
 
 ## Implementation notes
