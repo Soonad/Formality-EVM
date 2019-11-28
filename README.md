@@ -30,7 +30,7 @@ function that is yet to be written.
 
 ## Requirements
 
-- go-ethereum containing [0bf6382e] (not yet upstream).
+- go-ethereum v1.9.8 or newer.
 
 ## Debugging
 
@@ -85,5 +85,4 @@ This encoding has a couple advantages:
 The source code is first processed with [m4(1)] to enable use of macros
 for common code.
 
-[0bf6382e]: https://github.com/ethereum/go-ethereum/pull/20362/commits/0bf6382e19d307ebcb0d24f25673174f200c98e2
 [m4(1)]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/m4.html
