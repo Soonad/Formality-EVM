@@ -464,6 +464,20 @@ unary_dup:
 
 	OR
 
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @unary_dup_B
+
+	;; set net[A'[0]] = A index
+	DUP8
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+unary_dup_B:
 	;; rewrite node B
 	;; stack = [A', C index, B, B addr, B index, A, A addr, A index]
 
@@ -493,6 +507,20 @@ unary_dup:
 
 	OR
 
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @unary_dup_C
+
+	;; set net[B'[0]] = B index
+	DUP6
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+unary_dup_C:
 	;; rewrite node C
 	;; stack = [B', A', C index, B, B addr, B index, A, A addr, A index]
 
@@ -522,20 +550,25 @@ unary_dup:
 
 	OR
 
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @unary_dup_done
+
+	;; set net[C'[0]] = C index
+	DUP4
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+unary_dup_done:
 	;; stack = [C', B', A', C index, B, B addr, B index, A, A addr, A index]
-
-	;; XXX: C'[0] reverse edge
-
 	SWAP4
 	POP
-
-	;; XXX: B'[0] reverse edge
-
 	SWAP5
 	POP
-
-	;; XXX: A'[0] reverse edge
-
 	SWAP7
 	POP
 

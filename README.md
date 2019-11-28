@@ -77,7 +77,7 @@ This encoding has a couple advantages:
 - `NUM` - `ITE`: DONE
 - `ERA` - ` * `: DONE
 - Annihilation: DONE (mostly, needs some tweaks to the `NET_SET` macro to store the right port type)
-- Unary duplication: DONE (mostly, needs to set reverse edges from neighbors)
+- Unary duplication: DONE
 - Binary duplication: TODO
 
 ## Implementation notes
