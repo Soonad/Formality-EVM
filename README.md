@@ -78,7 +78,7 @@ This encoding has a couple advantages:
 - `ERA` - ` * `: DONE
 - Annihilation: DONE (mostly, needs some tweaks to the `NET_SET` macro to store the right port type)
 - Unary duplication: DONE
-- Binary duplication: TODO
+- Binary duplication: DONE
 
 ## Implementation notes
 

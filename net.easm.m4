@@ -416,8 +416,256 @@ annihilation_end:
 	JUMP @return
 
 binary_dup:
-	;; TODO: implement
-	STOP
+	POP
+	POP
+
+	;; allocate node C
+	ALLOC
+	;; allocate node D
+	ALLOC
+
+	;; rewrite node A
+	;; stack = [D index, C index, B, B addr, B index, A, A addr, A index]
+
+	;; A' kind and label = A kind and label
+	DUP6
+	PUSH 0xffffffffff000000
+	AND
+
+	;; A'[0] = B[1]
+	DUP4
+	NODE_PORT(1, 0)
+
+	OR
+
+	;; A'[0] type = B[1] type
+	DUP4
+	NODE_PORT_TYPE(1)
+
+	OR
+
+	;; A'[1] = D index | 1
+	DUP2
+	PUSH 1
+	OR
+	PUSH 128
+	SHL
+
+	OR
+
+	;; A'[2] = B index | 1
+	DUP6
+	PUSH 1
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @binary_dup_B
+
+	;; set net[A'[0]] = A index
+	DUP9
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+binary_dup_B:
+	;; rewrite node B
+	;; stack = [A', D index, C index, B, B addr, B index, A, A addr, A index]
+
+	;; B' kind and label = B kind and label
+	DUP4
+	PUSH 0xffffffffff000000
+	AND
+
+	;; B'[0] = A[2]
+	DUP8
+	NODE_PORT(2, 0)
+
+	OR
+
+	;; B'[0] type = A[2] type
+	DUP8
+	NODE_PORT_TYPE(2)
+
+	OR
+
+	;; B'[1] = A index | 2
+	DUP10
+	PUSH 2
+	OR
+	PUSH 128
+	SHL
+
+	OR
+
+	;; B'[2] = C index | 2
+	DUP4
+	PUSH 2
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @binary_dup_C
+
+	;; set net[B'[0]] = B index
+	DUP7
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+binary_dup_C:
+	;; write node C
+	;; stack = [B', A', D index, C index, B, B addr, B index, A, A addr, A index]
+
+	;; C' kind and label = A kind and label
+	DUP8
+	PUSH 0xffffffffff000000
+	AND
+
+	;; C'[0] = B[2]
+	DUP6
+	NODE_PORT(2, 0)
+
+	OR
+
+	;; C'[0] type = B[2] type
+	DUP6
+	NODE_PORT_TYPE(2)
+
+	OR
+
+	;; C'[1] = D index | 2
+	DUP4
+	PUSH 2
+	OR
+	PUSH 128
+	SHL
+
+	OR
+
+	;; C'[2] = B index | 2
+	DUP8
+	PUSH 2
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @binary_dup_D
+
+	;; set net[C'[0]] = C index
+	DUP5
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+binary_dup_D:
+	;; write node D
+	;; stack = [C', B', A', D index, C index, B, B addr, B index, A, A addr, A index]
+
+	;; D' kind and label = B kind and label
+	DUP6
+	PUSH 0xffffffffff000000
+	AND
+
+	;; D'[0] = A[1]
+	DUP10
+	NODE_PORT(1, 0)
+
+	OR
+
+	;; D'[0] type = A[1] type
+	DUP10
+	NODE_PORT_TYPE(2)
+
+	OR
+
+	;; D'[1] = A index | 1
+	DUP12
+	PUSH 1
+	OR
+	PUSH 128
+	SHL
+
+	OR
+
+	;; D'[2] = C index | 1
+	DUP6
+	PUSH 1
+	OR
+	PUSH 64
+	SHL
+
+	OR
+
+	DUP1
+	NODE_PORT_TYPE(0)
+	JUMPI @binary_dup_done
+
+	;; set net[D'[0]] = D index
+	DUP5
+	PUSH 192
+	SHL
+	DUP2
+	NODE_PORT(0)
+	NET_SET(PORT_PTR, 2)
+	POP
+
+binary_dup_done:
+	;; stack = [D', C', B', A', D index, C index, B, B addr, B index, A, A addr, A index]
+	SWAP3
+	SWAP11
+	POP
+
+	;; stack = [C', B', D', D index, C index, B, B addr, B index, A, A addr, A']
+	SWAP5
+	POP
+
+	;; stack = [B', D', D index, C index, C', B addr, B index, A, A addr, A']
+	SWAP6
+	POP
+
+	;; stack = [D', D index, C index, C', B addr, B', A, A addr, A']
+	SWAP1
+	PUSH 3
+	SHL
+	PUSH NET
+	ADD
+	MSTORE
+
+	;; stack = [C index, C', B addr, B', A, A addr, A']
+	PUSH 3
+	SHL
+	PUSH NET
+	ADD
+	MSTORE
+
+	;; stack = [B addr, B', A, A addr, A']
+	MSTORE
+	POP
+	MSTORE
+
+	JUMP @return
 
 unary_dup:
 	POP
