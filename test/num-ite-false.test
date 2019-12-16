@@ -1,0 +1,26 @@
+#             --CON
+#            /
+# NUM(0)--ITE       NUM(0x456)
+#            \     /
+#             --CON
+#                  \
+#                   NUM(0x123)
+
+redex=0
+input <<EOF
+	  0 0x4 0x8 0x03000001
+	0x1 123 456 0x00010100
+	0x2 0xa 0x9 0x00000000
+EOF
+
+# ERA          NUM(0x456)
+#    \        /
+#     CON--CON
+#    /        \
+# CON          NUM(0x123)
+
+output <<EOF
+	0x4 0x0 0x8 0x00000200
+	0x0 123 456 0x00010100
+	0x2 0xa 0x9 0x00000000
+EOF

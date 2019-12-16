@@ -1,0 +1,22 @@
+#               --CON
+#              /
+# NUM(123)--CON
+#              \
+#               --CON
+
+redex=0
+input <<EOF
+	123 0x4 0x8 0x00000001
+	0x1 0x6 0x5 0x00000000
+	0x2 0xa 0x9 0x00000000
+EOF
+
+# NUM(123)--CON
+#
+# NUM(123)--CON
+
+output <<EOF
+	-1 -1 -1 -1
+	123 0x6 0x5 0x00000001
+	123 0xa 0x9 0x00000001
+EOF

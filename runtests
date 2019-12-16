@@ -1,0 +1,54 @@
+#!/bin/sh
+
+: ${EVM:=evm}
+
+tmp=$(mktemp -d)
+
+trap 'rm -rf "$tmp"' EXIT
+
+if [ $# = 0 ]; then
+	set -- test/*.test
+fi
+
+input() {
+	{
+		printf '%064x' "$redex"
+		while read main aux0 aux1 info; do
+			printf '%016x' "$main" "$aux0" "$aux1" "$info"
+		done
+	} >"$test.input"
+}
+
+output() {
+	while read main aux0 aux1 info; do
+		printf ' %016x %016x %016x %016x\n' "$main" "$aux0" "$aux1" "$info"
+	done > "$tmp/want"
+}
+
+failed=0
+
+for test; do
+	pass=0
+	echo "Running test $test..."
+	echo
+	rm -f "$tmp/out" "$tmp/got" "$tmp/want"
+	. "$test"
+	if $EVM --statdump --inputfile "$test.input" --codefile net.evm run >"$tmp/out"; then
+		tail -c +67 "$tmp/out" | sed '
+			s,[[:xdigit:]]\{64\},&\n,g
+			s,[[:xdigit:]]\{16\}, &,g
+		' | sed '$d' >"$tmp/got"
+		if (cd "$tmp" && diff -u got want); then
+			printf 'PASS (used %d gas)\n' "$(head -c 66 "$tmp/out")"
+			pass=1
+		fi
+	fi
+	if [ "$pass" -eq 0 ]; then
+		failed=$((failed + 1))
+		printf "\nFAIL\n"
+	fi
+	echo "--------------------------------------------------------------------------------"
+done
+
+echo "$failed test failures"
+[ "$failed" -eq 0 ]

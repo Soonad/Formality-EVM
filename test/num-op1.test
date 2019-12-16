@@ -1,0 +1,14 @@
+# NUM(17)--OP1(* 3)--CON
+
+redex=0
+input <<EOF
+	 17   3 0x4 0x0201000101
+	0x2 0x6 0x5 0x0000000000
+EOF
+
+# NUM(51)--CON
+
+output <<EOF
+	-1 -1 -1 -1
+	51 0x6 0x5 0x00000001
+EOF
